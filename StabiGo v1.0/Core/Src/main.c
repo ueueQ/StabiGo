@@ -18,11 +18,13 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "Board.h"
 
 /* USER CODE END Includes */
 
@@ -88,7 +90,9 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART1_UART_Init();
+  MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
+  BoardInit();
 
   /* USER CODE END 2 */
 
@@ -97,7 +101,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+	loop();
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
