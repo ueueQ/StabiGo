@@ -2,20 +2,20 @@
 #include "Board.h"
 #include "BaseTypes.h"
 /*******************************************************************************
-* Halø‚Õ∑Œƒº˛œ‡πÿ*
+* HALÂ∫ìÂ§¥Êñá‰ª∂ *
 *******************************************************************************/
 #include "stm32f1xx_hal.h"
 #include "tim.h"
 /*******************************************************************************
-* Drv≤„Õ∑Œƒº˛œ‡πÿ*
+* Áî®Êà∑Â§¥Êñá‰ª∂ *
 *******************************************************************************/
 #include "DrvUsDelay.h"
 #include "DrvI2cSw.h"
-
+#include "DevSsd1315.h"
 
 
 /*******************************************************************************
-* Us—”≥Ÿœ‡πÿ*
+* UsÂª∂ËøüÁõ∏ÂÖ≥ *
 *******************************************************************************/
 #define TIM_BASE_US htim6
 
@@ -25,15 +25,15 @@ static Uint16 TimUsGetCounter(void)
 }
 
 /*******************************************************************************
-* Us—”≥Ÿœ‡πÿ*
+* UsÂª∂ËøüÁõ∏ÂÖ≥ *
 *******************************************************************************/
 
 
 /*******************************************************************************
-* Oled∆¡ƒªœ‡πÿ*
+* OLEDÁõ∏ÂÖ≥ *
 *******************************************************************************/
-//T_I2c  gtOledI2c;
-//T_Oled gtOled;
+T_I2cSw  gtOledI2c = {0u};
+T_Oled   gtOled  = {0u};
 
 static void OledSclOut(Uint8 ucValue)
 {
@@ -59,20 +59,16 @@ static void OledDcCtrl(Uint8 ucValue)
 {
     HAL_GPIO_WritePin(OLED_IIC_DC_GPIO_Port, OLED_IIC_DC_Pin, ucValue? GPIO_PIN_SET:GPIO_PIN_RESET);
 }
-/*******************************************************************************
-* Oled∆¡ƒªœ‡πÿ*
-*******************************************************************************/
-
-/*******************************************************************************
-* LEDœ‡πÿ*
-*******************************************************************************/
 
 
 
 /*******************************************************************************
-* LEDœ‡πÿ*
+* LEDÁõ∏ÂÖ≥ *
 *******************************************************************************/
- 	
+
+
+
+
 static void BoardPinInit(void)
 {
 
@@ -80,13 +76,26 @@ static void BoardPinInit(void)
 
 static void DriverInit(void)
 {
-	DrvUsDelayInit(TimUsGetCounter);
+    /* usÂª∂ËøüÂàùÂßãÂåñ */
+	HAL_TIM_Base_Start(&TIM_BASE_US);
+    DrvUsDelayInit(TimUsGetCounter);
 
+    /* OLED I2CÂàùÂßãÂåñ */
+    gtOledI2c.DelayUs = DrvBlockingDelayUs;
+    gtOledI2c.SclOut = OledSclOut;
+    gtOledI2c.SdaOut = OledSdaOut;
+    gtOledI2c.SdaRead = OledSdaRead;
 }
 
 static void DeviceInit(void)
 {
-
+    /* OLED ÂàùÂßãÂåñ */
+    gtOled.ucAddr = OLED_ADDR;
+    gtOled.ptI2c = &gtOledI2c;
+    gtOled.ResetCtrl = OledResetCtrl;
+    gtOled.DcCtrl = OledDcCtrl;
+    DevSsd1315Init(&gtOled);
+  
 }
 
 static void ModuleInit(void)
@@ -112,7 +121,10 @@ void BoardInit(void)
 void loop(void)
 {
 	HAL_Delay(1000);
+    DevOledDrawPoint(&gtOled, 0u, 0u);
 	HAL_GPIO_WritePin(LED_STATE_GPIO_Port, LED_STATE_Pin, GPIO_PIN_RESET);
 	HAL_Delay(1000);
+    DevOledDrawPoint(&gtOled, 127u, 63u);
 	HAL_GPIO_WritePin(LED_STATE_GPIO_Port, LED_STATE_Pin, GPIO_PIN_SET);
+    DevOledRefresh(&gtOled);
 }

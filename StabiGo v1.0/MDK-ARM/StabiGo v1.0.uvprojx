@@ -695,6 +695,13 @@
         </Group>
         <Group>
           <GroupName>Dev</GroupName>
+          <Files>
+            <File>
+              <FileName>DevSsd1315.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Dev\DevSsd1315.c</FilePath>
+            </File>
+          </Files>
         </Group>
         <Group>
           <GroupName>Module</GroupName>

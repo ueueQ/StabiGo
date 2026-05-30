@@ -1,51 +1,51 @@
-#ifndef _DRV_I2C_SW_H
-#define _DRV_I2C_SW_H
+#ifndef _DEV_OLED_SSD1315_H
+#define _DEV_OLED_SSD1315_H
 
 #include "BaseTypes.h"
+#include "DrvI2cSw.h"
 
 /*******************************************************************************
 * 宏定义 *
 *******************************************************************************/
-#define I2C_ACK   ((Uint8)0u)   
-#define I2C_NACK  ((Uint8)1u)   
+#define OLED_ADDR   0x78
+
+#define OLED_PAGE_WIDTH ((Uint8)128u)
+#define OLED_COM        ((Uint8)64u)  // OLED列数
+#define OLED_PAGE       ((Uint8)8u)   // OLED页数
+
+#define OLED_CMD    0x00u
+#define OLED_DATA   0x40u
 
 /*******************************************************************************
 * 结束宏定义 *
 *******************************************************************************/
 
 /*******************************************************************************
-* 全局类型 *
+* 结束宏定义 *
 *******************************************************************************/
-typedef struct I2cSw
+
+typedef struct Oled
 {
-    Uint8 ucDelayUs;   // IIC速率
+    Uint8 ucAddr;    // OLED I2C地址
     
-    // 用户需进行注册
-    void (*DelayUs)(Uint16 uiUs); 
-    void (*SclOut)(Uint8 ucValue);
-    void (*SdaOut)(Uint8 ucValue);
-    Uint8 (*SdaRead)(void);
+    Uint8 aucGDDRAM[OLED_PAGE][OLED_PAGE_WIDTH];  // OLED显示内存
+    
+    T_I2cSw *ptI2c;
+    
+    void (*ResetCtrl)(Uint8 ucValue);
+    void (*DcCtrl)(Uint8 ucValue);
+    
+} T_Oled;
 
-} T_I2cSw;
-
-/*******************************************************************************
-* 结束全局类型 *
-*******************************************************************************/
 
 /*******************************************************************************
 * 全局函数原型 *
 *******************************************************************************/
-void DrvI2cSwStart(T_I2cSw *ptI2c);
-void DrvI2cSwStop(T_I2cSw *ptI2c);
-void DrvI2cSwAck(T_I2cSw *ptI2c);
-void DrvI2cSwAckNo(T_I2cSw *ptI2c);
-Uint8 DrvI2cSwWaitAck(T_I2cSw *ptI2c);
-void DrvI2cSwSendByte(T_I2cSw *ptI2c, Uint8 ucValue);
-Uint8 DrvI2cSwReadByte(T_I2cSw *ptI2c, Uint8 ucIsAck);
-
+void DevSsd1315Init(T_Oled *ptOled);
+void DevOledRefresh(T_Oled *ptOled);
+void DevOledDrawPoint(T_Oled *ptOled, Uint8 X, Uint8 Y);
 /*******************************************************************************
 * 结束全局函数原型 *
 *******************************************************************************/
 
 #endif
-
