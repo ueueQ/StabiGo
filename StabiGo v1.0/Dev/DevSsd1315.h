@@ -43,7 +43,13 @@ typedef struct Oled
 *******************************************************************************/
 void DevSsd1315Init(T_Oled *ptOled);
 void DevOledRefresh(T_Oled *ptOled);
+void DevOledFillAll(T_Oled *ptOled);
+void DevOledClearAll(T_Oled *ptOled);
 void DevOledDrawPoint(T_Oled *ptOled, Uint8 X, Uint8 Y);
+void DevOledDrawChar(T_Oled *ptOled, Uint8 ucX, Uint8 ucY, Uint8 ucChar);
+void DevOledDrawString(T_Oled *ptOled, Uint8 ucX, Uint8 ucY, Uint8 *pucStr);
+void DevOledDrawNum(T_Oled *ptOled, Uint8 ucX, Uint8 ucY, Sint32 iNumber, Uint8 Length);
+void DevOledDrawImage(T_Oled *ptOled, Uint8 ucX, Uint8 ucY, Uint8 ucImageX, Uint8 ucImageY, const Uint8 *pucImageBuf);
 /*******************************************************************************
 * 结束全局函数原型 *
 *******************************************************************************/

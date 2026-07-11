@@ -51,10 +51,7 @@ static void DevOledSendData(T_Oled *ptOled, Uint8 *pucBuf,Uint8 ucLen)
 
 /*******************************************************************************
 * 函数名称： DevOledRefresh()
-* 功能描述： ssd1315 oled 初始化
-* 输入参数： ptOled:  oled结构体指针
-            ucTemp: 要发送的数据
-            ucMask：命令or数据
+* 功能描述： ssd1315 oled 刷新
 * 输出参数： 无
 * 返 回 值： 无
 * 其它说明： 无
@@ -71,6 +68,24 @@ void DevOledRefresh(T_Oled *ptOled)
         
         DevOledSendData(ptOled, ptOled->aucGDDRAM[ucPage], OLED_PAGE_WIDTH);
     }
+}
+
+/*******************************************************************************
+* 函数名称： DevOledFillAll()
+* 功能描述： ssd1315 oled 填充屏幕
+* 输入参数： ptOled:  oled结构体指针
+* 输出参数： 无
+* 返 回 值： 无
+* 其它说明： 无
+*******************************************************************************/
+void DevOledFillAll(T_Oled *ptOled)
+{
+    Uint8 ucPage = 0u;
+    
+    for(ucPage = 0u; ucPage < OLED_PAGE; ucPage++)
+    {
+        memset(ptOled->aucGDDRAM[ucPage], 0xFF, OLED_PAGE_WIDTH);
+    }    
 }
 
 /*******************************************************************************
@@ -98,21 +113,21 @@ void DevOledClearAll(T_Oled *ptOled)
             ucX: X偏移
             ucY: Y偏移
             ucImageX: 图片X方向大小
-            ucImageY：图片U方向大小
+            ucImageY：图片Y方向大小
 * 输出参数： 无
 * 返 回 值： 无
 * 其它说明： 无
 *******************************************************************************/
 void DevOledClearArea(T_Oled *ptOled, Uint8 ucX, Uint8 ucY, Uint8 ucImageX, Uint8 ucImageY)
 {
-	Uint8 ucXmax = MIN(ucX + ucImageY, OLED_COM);
-	Uint8 ucYmax = MIN(ucY + ucImageX, OLED_PAGE_WIDTH);
+	Uint8 ucXmax = MIN(ucX + ucImageX, OLED_PAGE_WIDTH);
+	Uint8 ucYmax = MIN(ucY + ucImageY, OLED_COM);
 	
 	for (Uint8 i = ucX; i < ucXmax; i++)
 	{
 		for (Uint8 j = ucY; j < ucYmax; j ++)
 		{
-			ptOled->aucGDDRAM[i / 8 ][j] &= ~(0x01 << (i % 8));
+			ptOled->aucGDDRAM[j / 8][i] &= ~(0x01 << (j % 8));
 		}
 	}	
 }
@@ -135,7 +150,7 @@ void DevOledDrawPoint(T_Oled *ptOled, Uint8 ucX, Uint8 ucY)
 {
 	if ((ucX <= 127u) && (ucY <= 63u))		
 	{		
-		ptOled->aucGDDRAM[ucY / 8u][ucX] |= 0x01 << (ucY % 8u);  // ���Դ�����ָ��λ�õ�һ��Bit������1
+		ptOled->aucGDDRAM[ucY / 8u][ucX] |= 0x01 << (ucY % 8u);  
 	}
 }
 
@@ -146,7 +161,7 @@ void DevOledDrawPoint(T_Oled *ptOled, Uint8 ucX, Uint8 ucY)
             ucX: X偏移
             ucY: Y偏移
             ucImageX: 图片X方向大小
-            ucImageY：图片U方向大小
+            ucImageY：图片Y方向大小
             pucImageBuf：图片buf
 * 输出参数： 无
 * 返 回 值： 无
@@ -156,21 +171,24 @@ void DevOledDrawPoint(T_Oled *ptOled, Uint8 ucX, Uint8 ucY)
 	 |
   Y(0-63)
 *******************************************************************************/
-// void DevOledDrawImage(T_Oled *ptOled, Uint8 ucX, Uint8 ucY, Uint8 ucImageX, Uint8 ucImageY, const Uint8 *pucImageBuf)
-// {
-// 	DevOledClearArea(ptOled, ucX, ucY, ucImageX, ucImageY);  //  ?????????���������
+void DevOledDrawImage(T_Oled *ptOled, Uint8 ucX, Uint8 ucY, Uint8 ucImageX, Uint8 ucImageY, const Uint8 *pucImageBuf)
+{
+    if (((ucX > 127u) && (ucY > 63u)) || (((ucX + ucImageX) > 127u) && ((ucY + ucImageY) > 63u)))
+    {
+        return;
+    }
+    
+	DevOledClearArea(ptOled, ucX, ucY, ucImageX, ucImageY);  
 	
-// 	for (uint8_t j = 0; j < (Height -1) / 8 + 1; j ++)		// j < (Height -1) / 8 + 1������ȡ��
-// 	{		
-// 		// ���п�ҳд��
-// 		for (uint8_t i = 0; i < Width; i ++)
-// 		{
-// 			OLED_DisplayBuff[Row / 8 + j][Column + i] |= Image[Width * j + i] << (Row % 8);			// ��ҳ�������ݵĵ�λ  ���ƶ�����λ������õ���5λ
-// 			OLED_DisplayBuff[Row / 8 + j + 1][Column + i] |= Image[Width * j + i] >> (8 - Row % 8);	// ��ҳ�������ݵĸ�λ  ���ƶ�����λ������õ���3λ
-// 		}
-// 	}
-
-// }
+	for (Uint8 j = 0u; j < (ucImageY -1) / 8 + 1; j ++)		
+	{		
+		for (Uint8 i = 0u; i < ucImageX; i ++)
+		{
+			ptOled->aucGDDRAM[ucY / 8 + j][ucX + i] |= pucImageBuf[ucImageX * j + i] << (ucY % 8);			
+			ptOled->aucGDDRAM[ucY / 8 + j + 1][ucX + i] |= pucImageBuf[ucImageX * j + i] >> (8 - ucY % 8);	
+		}
+	}
+}
 
 /*******************************************************************************
 * 函数名称： DevOledDrawChar()
@@ -178,6 +196,7 @@ void DevOledDrawPoint(T_Oled *ptOled, Uint8 ucX, Uint8 ucY)
 * 输入参数： ptOled:  oled结构体指针
             ucX: X偏移
             ucY: Y偏移
+            ucChar: 要显示的字符
 * 输出参数： 无
 * 返 回 值： 无
 * 其它说明： 
@@ -189,7 +208,77 @@ Y(0-63)
 *******************************************************************************/
 void DevOledDrawChar(T_Oled *ptOled, Uint8 ucX, Uint8 ucY, Uint8 ucChar)
 {
-	
+    DevOledDrawImage(ptOled, ucX, ucY, FONT_0608_WIDTH, FONT_0608_HEIGHT, OLED_FONT_0608[ucChar - ' ']);
+}
+
+/*******************************************************************************
+* 函数名称： DevOledDrawString()
+* 功能描述： ssd1315 oled 画字符串函数
+* 输入参数： ptOled:  oled结构体指针
+            ucX: X偏移
+            ucY: Y偏移
+            pucStr: 要显示的字符串
+* 输出参数： 无
+* 返 回 值： 无
+* 其它说明： 
+Y(0-63)
+ |
+ |
+ |______________ X(0-127)
+(0,0)
+*******************************************************************************/
+void DevOledDrawString(T_Oled *ptOled, Uint8 ucX, Uint8 ucY, Uint8 *pucStr) 
+{
+	for (Uint8 i = 0u; pucStr[i] != '\0'; i++)		
+	{
+		DevOledDrawChar(ptOled, ucX + i * FONT_0608_WIDTH, ucY, pucStr[i]);
+	}
+}
+
+static Uint32 DevOledPow(Uint8 ucNumber, Uint8 ucN)
+{
+	Uint32 uiResult = 1;	
+	while(ucN --)			
+	{
+		uiResult *= ucNumber;		
+	}
+	return uiResult;
+}
+
+/*******************************************************************************
+* 函数名称： DevOledDrawNum()
+* 功能描述： ssd1315 oled 画数字函数
+* 输入参数： ptOled:  oled结构体指针
+            ucX: X偏移
+            ucY: Y偏移
+            iNumber: 要显示的数字
+* 输出参数： 无
+* 返 回 值： 无
+* 其它说明： 
+Y(0-63)
+ |
+ |
+ |______________ X(0-127)
+(0,0)
+*******************************************************************************/
+void DevOledDrawNum(T_Oled *ptOled, Uint8 ucX, Uint8 ucY, Sint32 iNumber, Uint8 Length)
+{
+    if(iNumber < 0)    // 因为和有符号类型比较，0后不能加u，否则会被当成无符号数，导致条件永远为真
+    {
+        DevOledDrawChar(ptOled, ucX, ucY, '-');
+        ucX += FONT_0608_WIDTH;
+        iNumber = -iNumber;
+    }
+    else
+    {
+        DevOledDrawChar(ptOled, ucX, ucY, '+');
+        ucX += FONT_0608_WIDTH;
+    }
+
+	for (Uint8 i = 0u; i < Length; i++)							
+	{
+		DevOledDrawChar(ptOled, ucX + i * FONT_0608_WIDTH, ucY, iNumber / DevOledPow(10, Length - i - 1) % 10 + '0');
+	}
 }
 
 /*******************************************************************************
@@ -205,9 +294,6 @@ void DevSsd1315Init(T_Oled *ptOled)
     ptOled->DcCtrl(0u);
     
     ptOled->ResetCtrl(0u);
-    ptOled->ptI2c->DelayUs(60000);
-    ptOled->ptI2c->DelayUs(60000);
-    ptOled->ptI2c->DelayUs(60000);
     ptOled->ptI2c->DelayUs(20000);
     ptOled->ResetCtrl(1u);
     

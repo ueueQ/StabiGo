@@ -6,12 +6,15 @@
 *******************************************************************************/
 #include "stm32f1xx_hal.h"
 #include "tim.h"
+#include "usart.h"
 /*******************************************************************************
 * 用户头文件 *
 *******************************************************************************/
+#include "tiny_eds.h"
 #include "DrvUsDelay.h"
 #include "DrvI2cSw.h"
 #include "DevSsd1315.h"
+#include "DrvTimeStamp.h"
 
 
 /*******************************************************************************
@@ -60,14 +63,44 @@ static void OledDcCtrl(Uint8 ucValue)
     HAL_GPIO_WritePin(OLED_IIC_DC_GPIO_Port, OLED_IIC_DC_Pin, ucValue? GPIO_PIN_SET:GPIO_PIN_RESET);
 }
 
-
+static void OledShow(void)
+{
+    DevOledDrawNum(&gtOled, 3u, 10u, 12345, 5);
+    DevOledDrawNum(&gtOled, 3u, 20u, -12345, 5);
+    DevOledDrawString(&gtOled, 15u, 0u, (Uint8 *)"Hello StabiGo!");
+    DevOledRefresh(&gtOled);
+}
 
 /*******************************************************************************
 * LED相关 *
 *******************************************************************************/
+static void LedCtrl(void)
+{
+    HAL_GPIO_TogglePin(LED_STATE_GPIO_Port, LED_STATE_Pin);
+}
 
+/*******************************************************************************
+* uart1相关 *
+*******************************************************************************/
 
+uint8_t gLedState = 0x55u;
+static void UartCtrl(void)
+{
+    HAL_UART_Transmit(&huart1, &gLedState, 1, HAL_MAX_DELAY);
+}
 
+/*******************************************************************************
+* TinyEDS相关 *
+*******************************************************************************/
+time_event_t gTimeEvent10ms[] = {0};
+time_event_t gTimeEvent20ms[] = {{OledShow, 1u}};
+time_event_t gTimeEvent1000ms[] = {{LedCtrl, 1u},{UartCtrl, 1u}};
+
+notify_event_t gNotifyEvent[];
+
+/*******************************************************************************
+* 结束TinyEDS相关 *
+*******************************************************************************/
 
 static void BoardPinInit(void)
 {
@@ -104,6 +137,11 @@ static void ModuleInit(void)
 
 static void AppInit(void)
 {
+    tiny_eds_init(DrvTspGet);
+    REGISTER_MS_EVENT(PERIOD_10MS,   gTimeEvent10ms);
+    REGISTER_MS_EVENT(PERIOD_20MS,   gTimeEvent20ms);
+    REGISTER_MS_EVENT(PERIOD_1000MS, gTimeEvent1000ms);
+    // REGISTER_NOTIFY_EVENT(gNotifyEvent);
 }
 
 
@@ -120,11 +158,5 @@ void BoardInit(void)
 
 void loop(void)
 {
-	HAL_Delay(1000);
-    DevOledDrawPoint(&gtOled, 0u, 0u);
-	HAL_GPIO_WritePin(LED_STATE_GPIO_Port, LED_STATE_Pin, GPIO_PIN_RESET);
-	HAL_Delay(1000);
-    DevOledDrawPoint(&gtOled, 127u, 63u);
-	HAL_GPIO_WritePin(LED_STATE_GPIO_Port, LED_STATE_Pin, GPIO_PIN_SET);
-    DevOledRefresh(&gtOled);
+    tiny_eds_run();
 }
