@@ -41,6 +41,7 @@ typedef struct Oled
 /*******************************************************************************
 * 全局函数原型 *
 *******************************************************************************/
+
 void DevSsd1315Init(T_Oled *ptOled);
 void DevOledRefresh(T_Oled *ptOled);
 void DevOledFillAll(T_Oled *ptOled);

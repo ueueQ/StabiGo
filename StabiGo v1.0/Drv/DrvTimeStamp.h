@@ -19,6 +19,7 @@ typedef struct TimeStamp
 /*******************************************************************************
 * 全局函数类型 *
 *******************************************************************************/
+
 void  DrvRemoteTspSet(Uint64 ullVaule);
 Uint64 DrvTspGet(void);
 void  DrvTspAdd(void);

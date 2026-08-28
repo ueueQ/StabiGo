@@ -35,6 +35,7 @@ typedef struct I2cSw
 /*******************************************************************************
 * 全局函数原型 *
 *******************************************************************************/
+
 void DrvI2cSwStart(T_I2cSw *ptI2c);
 void DrvI2cSwStop(T_I2cSw *ptI2c);
 void DrvI2cSwAck(T_I2cSw *ptI2c);
@@ -42,7 +43,6 @@ void DrvI2cSwAckNo(T_I2cSw *ptI2c);
 Uint8 DrvI2cSwWaitAck(T_I2cSw *ptI2c);
 void DrvI2cSwSendByte(T_I2cSw *ptI2c, Uint8 ucValue);
 Uint8 DrvI2cSwReadByte(T_I2cSw *ptI2c, Uint8 ucIsAck);
-
 /*******************************************************************************
 * 结束全局函数原型 *
 *******************************************************************************/
